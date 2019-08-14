@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<config>
+    <modules>
+        <Payair_Adminhtml>
+            <active>true</active>
+            <codePool>community</codePool>
+        </Payair_Adminhtml>
+    </modules>
+</config>

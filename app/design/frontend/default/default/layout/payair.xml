@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<layout version="0.1.0">
+	<default translate="label" module="page">
+		<reference name="head">
+			<action method="addCss"><stylesheet>css/payair.css</stylesheet></action>
+		</reference>
+    </default>
+	<catalog_product_view translate="label">
+        <reference name="content">
+			<block type="gate/payproduct" name="payair.gate.payproduct"  before="-">
+				<action method="setBannerTemplate"><value>gate/product.phtml</value></action>
+				<action method="chooseTemplate"/>
+			</block>
+        </reference>
+		
+		<reference name="product.info.addtocart">
+			<block type="gate/payproduct" name="payair.gate.paybutton">
+				<action method="setButtonTemplate"><value>gate/button.phtml</value></action>
+				<action method="chooseTemplate"/>
+			</block>
+		</reference>
+    </catalog_product_view>  
+	
+	<checkout_onepage_index translate="label">
+        <reference name="content">
+            <block type="gate/paycheckout" name="payair.gate.paycheckout" before="-" template="gate/checkout.phtml"/>
+        </reference>
+		<reference name="content">
+			<block type="gate/paymentjs" name="payair.gate.paymentjs" />
+        </reference>
+    </checkout_onepage_index>
+	
+	<catalog_category_default translate="label">
+		<reference name="head">
+				<action method="addJs">
+					<script>payair/category.js</script>
+					<params>id="Payair_Location"</params>
+				</action>
+        </reference>
+	</catalog_category_default>
+	
+</layout>

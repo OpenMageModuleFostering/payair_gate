@@ -1,0 +1,16 @@
+<script>
+
+	var url = 'https://payair.com/ms/';
+	alert(1);
+	var src = document.getElementById('Payair_QR').src;
+
+	var locals = [/localhost/, /10\.[0|2]\.[0-9]{1,3}\.[0-9]{1,3}/, /\.\.\//];
+
+	for (var i = 0; i < locals.length; i++) {
+		if (src.match(locals[i])) {
+			alert(locals[i]);
+			var uri = window.location;
+			url = uri.protocol + '//' + uri.host + '/ms/';
+		}
+	}
+	</script>

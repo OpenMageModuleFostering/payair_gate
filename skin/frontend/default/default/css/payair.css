@@ -1,0 +1,69 @@
+/**
+ * Payair CSS
+ ** 
+ */
+ 
+ .payair-button {
+	margin: 10px 0 0 69px;
+ }
+ 
+ .payair-banner-wrapper {
+	padding: 20px 0; 
+ }
+ .payair-banner-inner {
+	height: 118px; 
+	overflow: hidden;
+ }
+ .payair-banner-container {
+	background-repeat: no-repeat; 
+	position: relative; 
+	width: 383px; 
+	height: 118px;
+ }
+ .payair-btn-wrapper {
+	position: absolute;
+	left: 225px;
+	top: 20px;
+
+ }
+ 
+.payair-video-btn-container {
+        position: absolute;
+        width: 52px;
+        left: 73px;
+        top: 78px;
+ }
+ 
+.payair-video-btn-container1 {
+	position: absolute;
+	width: 52px;
+	left: -155px;
+	top: 56px;
+}
+
+ 
+ .payair-video-btn-container a {
+	cursor: pointer; opacity: 1;
+ }
+ 
+ .payair-video-btn-container1 a {
+	cursor: pointer; opacity: 1;
+ }
+ 
+ .payair-div-clear {
+	clear: both;
+ }
+ 
+ .render-dialog-form {
+	display: inline;
+	z-index: 10000;
+ }
+ 
+ .render-dialog-form-button {
+	margin: 10px 0 0 69px;
+ }
+ 
+ #render_dialog_form img {
+	cursor: pointer;
+	opacity: 1;
+ }

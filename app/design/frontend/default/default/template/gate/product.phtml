@@ -1,0 +1,49 @@
+<?php 
+	//Check the status 
+	$is_payair_active = Mage::getStoreConfig('payment/gate/active');
+	$is_inlocation_installed = Mage::helper('core')->isModuleEnabled('Payair_Inlocationdelivery');
+	$is_payair_inlocation_active = Mage::getStoreConfig('carriers/inlocation/active');
+	// If the Payair inlocation is uninstalled
+	if (!$is_inlocation_installed) $is_payair_inlocation_active = 0;
+	
+	if ($is_payair_active) {
+		// Load helper
+		$payair_script = Mage::helper('gate')->getEnvironmentJavascript();
+		$payair_checkout_img = Mage::helper('gate')->getBannerImages('background');		
+		$payair_android_small_img = Mage::helper('gate')->getBannerImages('video');
+				
+		$product = Mage::registry('current_product');
+		$button_js = '<script src="'.$payair_script.'?merchantreference='.Mage::getStoreConfig('payment/gate/gate_marchantref').'&amp;articleID='.$product->getId().'&amp;product_name='.urlencode($product->getName()).'&amp;product_price='.number_format($product->getPrice(),2,'.','').'&amp;product_currency='.Mage::app()->getStore()->getCurrentCurrencyCode().'" type="text/javascript" charset="latin1" id="Payair_QR"></script>';
+		
+		if ($is_payair_inlocation_active) {
+			// Custom location delivery active
+			$payair_js_display = 'none';
+			$button_html = '<div id="render_dialog_form" class="render-dialog-form"><img onmouseover="this.style.opacity = 0.75;" onmouseout="this.style.opacity = 1;" src="https://test.payair.com/embed/img/payair_button.png"></div>';
+		} else {
+			
+			$payair_js_display = 'block';
+			$button_html = '';
+		}
+		$qr_info = '<div class="payair-banner-wrapper">
+					<div class="payair-banner-inner">
+						<div style="background-image: url('.$payair_checkout_img.');" class="payair-banner-container">
+							<div class="payair-btn-wrapper">
+								<!-- Button code start -->
+								<span style="display:'.$payair_js_display.';">'.$button_js.'</span> '.$button_html.'
+						    </div>
+						<div class="payair-video-btn-container">
+							<a onmouseout="this.style.opacity=1;" onmouseover="this.style.opacity=0.5;" onclick="startIframeInfoOnly(); return false">
+								<img width="52" height="33" alt="" src="'.$payair_android_small_img.'">
+							</a>
+						</div>
+						</div>
+					<div class="payair-div-clear">
+					</div>
+				</div>
+				</div>';
+
+		// Display QR info
+					
+		echo $qr_info;
+	}
+?>

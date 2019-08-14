@@ -1,0 +1,231 @@
+<?php
+	// Check the status
+	$is_payair_active = Mage::getStoreConfig('payment/gate/active');
+	$is_inlocation_installed = Mage::helper('core')->isModuleEnabled('Payair_Inlocationdelivery');
+	$is_payair_inlocation_active = Mage::getStoreConfig('carriers/inlocation/active');
+	
+	if (!$is_inlocation_installed) $is_payair_inlocation_active = 0;
+	
+	if ($is_payair_active) {
+		$payair_script = Mage::helper('gate')->getEnvironmentJavascript('checkout');
+        $items = Mage::getSingleton('checkout/session')->getQuote()->getAllItems();
+
+        if (count($items) == 0){
+            return "";
+        }
+		
+		/* 
+		 * Check SnapView API to determine if the Store is OPEN or CLOSED to allow Payair to be ACTIVE -- Version 1.1
+		 * Get Merchant Reference from Payair Payment Method and Store ID
+         */
+		 
+		$store_id = Mage::app()->getStore()->getStoreId();
+		$snap_view = Mage::getStoreConfig('payment/gate/gate_snap_view', $store_id);
+		if ( $snap_view == 1 ) {
+			$merchant_ref = Mage::getStoreConfig('payment/gate/gate_marchantref', $store_id);
+			$action = 'snapview';
+			$cmd = 'is_open';
+			$url = 'http://api.payairus.com';
+			$params = '?action='.$action.'&mref='.$merchant_ref.'&store_id='.$store_id.'&cmd='.$cmd;
+			$result = json_decode(file_get_contents($url.$params));
+
+			//Test printout of the request url and result from the API.
+			/*if($_GET['test'] == 1) {
+					print_r("Request: ".$url);
+					print_r($params."<br />");
+					print_r("Result from API: ");
+					print_r($result);
+			} */
+
+			if ( ( $result->response->status == "OK" && $result->response->open != 1 ) || $result->response->status == "NOK" ) {
+					$is_payair_active = FALSE;
+					echo "<ul class=\"messages\"><li class=\"error-msg\">Sorry but the store is closed for ordering at this time.<br />Please visit us during business hours.</li></ul>";
+			} elseif( $result->response->status == "OK" && $result->response->open != 1 ) {
+					//Do NOTHING
+        }
+	}
+		
+?>
+<script>    
+	var payStatus = Class.create();
+	payStatus.prototype = {
+		startProcessing: false,
+		initialize: function(link){
+			this.link = link;
+			this.startProcessing = true;
+			this.checkStatus();
+		},
+		checkStatus: function() {
+			if (this.startProcessing) {
+				var checkPayStatus = this.ajaxCallPayStatus();
+			}
+		},
+		ajaxCallPayStatus: function(){
+			var $this = this;
+			var url = '<?php echo Mage::getBaseUrl(); ?>payaircallback/index/payStatus/link/'+this.link;
+			var ajax = new MakeAjaxRequest();
+			ajax.onreadystatechange=function() {
+				if (ajax.readyState==4) {
+					if (ajax.status==200) { 
+						var reponseData = ajax.responseText;	
+						switch(reponseData)	{
+							case 'running' : 
+									var myCheckStatusInt = setInterval(function(){$this.checkStatus();},5000);
+									break;
+							case 'success' : 
+									window.location = '<?php echo Mage::getBaseUrl(); ?>';
+									break;
+							case 'declined' : 
+									window.location = '<?php echo Mage::getBaseUrl(); ?>';
+									break;
+							default : 
+									window.clearInterval(myCheckStatusInt);
+									break;
+						}
+					} 
+				}
+			}
+        
+			ajax.open("GET", url, false);
+			ajax.send(null);
+		}
+	}
+
+    function MakeAjaxRequest() {
+        var activexmodes=["Msxml2.XMLHTTP", "Microsoft.XMLHTTP"] //activeX versions to check for in IE
+        if (window.ActiveXObject) { //Test for support for ActiveXObject in IE first (as XMLHttpRequest in IE7 is broken)
+            for (var i=0; i<activexmodes.length; i++) {
+                try {
+                    return new ActiveXObject(activexmodes[i])
+                }
+                catch(e) {
+                    //suppress error
+                }
+            }
+        }
+        else if (window.XMLHttpRequest) // if Mozilla, Safari etc
+            return new XMLHttpRequest()
+        else
+            return false
+    }
+    
+    var ajax = new MakeAjaxRequest();
+   
+	function ajaxCallCart(url) {
+        ajax.onreadystatechange=function() {
+            if (ajax.readyState==4) {
+                if (ajax.status==200) { 
+					//var text = ajax.responseText;
+					var obj = JSON.parse(ajax.responseText);
+					var text = obj.text;
+					var file = obj.file;
+					if(text.length != 10) {
+						hideScanInfo();
+						hideScanWrapper(); 
+						alert(text);
+						return false;                       
+                    } else {
+                        Payair_DATA.setQR_data(text);
+						new payStatus(file);
+					}
+                } else {
+					hideScanInfo();
+					hideScanWrapper(); 
+                    alert("An error has occured making the request");
+					return false;  
+                }
+            }
+        }
+        
+        ajax.open("GET", url, true);
+        ajax.send(null);
+    }
+    
+    function GetQRData() {
+        //poller = setInterval('StartPolling()', 4001);
+        
+        ajaxCallCart('<?php echo Mage::getBaseUrl(); ?>payaircallback/index/cart/');
+        
+        var elementt = document.getElementById("QRholder");
+        if (elementt != null) {
+            elementt.style.display = "block";
+        }
+    }   
+	// May be used later on
+    /*function ClearQRData() {
+        clearInterval(poller);
+        qr_data = '';
+        var elementt = document.getElementById("QRholder");
+        if (elementt != null) {
+            elementt.style.display = "none";
+        }
+    }
+    function StartPolling() {
+        CheckStatus();
+    }
+
+    function CheckStatus() {
+
+    }
+
+    function GetOrderOnSuccess(result) {
+        if (result.Status == 1) {
+            clearInterval(poller);
+            var url = "/Checkout/Finished.aspx?identifier=" + result.OrderIdentifier + "&key=" + result.MAC;
+            //alert("\n---Result.status\n----- " + result.Status + "\n\n---OrderIdentifier\n----- " + result.OrderIdentifier + "\n\n---MAC / KEY\n----- " + result.MAC + "\n\n---URL\n----- " + url);                            
+            document.location = url;
+            //ShowOrderComplete(result);
+        }
+    }
+
+    function ShowOrderComplete(result) {
+        var url = "/Checkout/Finished.aspx?identifier=" + result.OrderIdentifier + "&key=" + result.MAC;
+        document.location = url;
+    }
+    var poller = false; 
+    */
+</script>
+
+<?php 
+	$payair_checkout_img = Mage::helper('gate')->getBannerImages('background');		
+	$payair_android_small_img = Mage::helper('gate')->getBannerImages('video');
+?>
+<div class="payair-banner-wrapper">
+<div class="payair-banner-inner">
+	<div style="background-image:url(<?php echo $payair_checkout_img;?>);" class="payair-banner-container">
+		<div class="payair-btn-wrapper">		
+		<!-- Button code start -->
+		<?php 
+		
+		$grandTotal = Mage::getModel('checkout/cart')->getQuote()->getGrandTotal();
+		$checkout_price = number_format($grandTotal,2,'.','');
+		
+		$button_js = '<script src="'.$payair_script.'?checkout_price='.$checkout_price.'&checkout_currency='.Mage::app()->getStore()->getCurrentCurrencyCode().'" type="text/javascript" id="Payair_QR"></script>';
+		
+		if ($is_payair_inlocation_active) {
+			// Custom location delivery active
+			$payair_js_display = 'none';
+			?>
+			<div id="render_dialog_form" class="render-dialog-form"><img onmouseover="this.style.opacity = 0.75;" onmouseout="this.style.opacity = 1;" src="https://test.payair.com/embed/img/payair_button.png"></div>
+		
+		<?php } else { 
+			$payair_js_display = 'block';			
+		 }	
+	    ?>	
+
+		<span style="display:<?php echo $payair_js_display; ?>"><?php echo $button_js; ?> </span>
+		<!-- Button Code Stop -->
+		
+		<!-- Video code start -->
+		<div class="payair-video-btn-container1">
+			<a onmouseout="this.style.opacity=1;" onmouseover="this.style.opacity=0.5;" onclick="startIframeInfoOnly(); return false;">
+				<img width="52" height="33" alt="" src="<?php echo $payair_android_small_img; ?>">
+			</a>
+		</div>
+		<!-- Video code ends-->
+			</div>
+	</div>
+<div class="payair-div-clear"></div>
+</div>  
+</div> 
+<?php }?>

@@ -1,0 +1,31 @@
+<?php
+	$is_payair_active = Mage::getStoreConfig('payment/gate/active');
+	$is_inlocation_installed = Mage::helper('core')->isModuleEnabled('Payair_Inlocationdelivery');
+	$is_payair_inlocation_active = Mage::getStoreConfig('carriers/inlocation/active');
+	
+	if (!$is_inlocation_installed) $is_payair_inlocation_active = 0;
+	
+	if ($is_payair_active) {
+		$product = Mage::registry('current_product');
+		// Load helper
+		$payair_script = Mage::helper('gate')->getEnvironmentJavascript();
+		
+		$button_js = '<script src="'.$payair_script.'?merchantreference='.Mage::getStoreConfig('payment/gate/gate_marchantref').'&articleID='.$product->getId().'&product_name='.urlencode($product->getName()).'&product_price='.number_format($product->getPrice(),2,'.','').'&product_currency='.Mage::app()->getStore()->getCurrentCurrencyCode().'" type="text/javascript" charset="latin1" id="Payair_QR"></script>';
+		
+		if ($is_payair_inlocation_active) {	
+			$button_html = '<br />
+				<span style="display:none;">'.$button_js.'</span>
+				<div id="render_dialog_form" class="render-dialog-form-button">
+					<img onmouseover="this.style.opacity = 0.75;" onmouseout="this.style.opacity = 1;" src="https://test.payair.com/embed/img/payair_button.png">
+				</div>';
+		} else {
+			$button_html = '<br/>
+					<div class="render-dialog-form-button">
+					<!-- Button code start -->
+						<span style="display:block;">'.$button_js.'</span>
+					</div>';
+		}
+		echo $button_html;
+	}
+	
+?>

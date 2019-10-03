@@ -1,16 +1,19 @@
 {
-    "name": "OpenMageModuleFostering/Payair_gate",
+    "name": "OpenMageModuleFostering\/Payair_gate",
     "type": "magento-module",
     "license": "GPL",
     "homepage": "",
     "description": "Payair payment gateway version 4",
     "authors": [
-    {
-        "name": "Christian Sanchez",
-        "email": "christian.sanchez@payair.com"
-    }
-],
+        {
+            "name": "Christian Sanchez",
+            "email": "christian.sanchez@payair.com"
+        }
+    ],
     "suggest": {
-        "magento-hackathon/magento-composer-installer": "*"
-    }
+        "magento-hackathon\/magento-composer-installer": "*"
+    },
+    "keywords": [
+        "openmage-module"
+    ]
 }
